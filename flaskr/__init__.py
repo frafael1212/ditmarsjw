@@ -1,14 +1,25 @@
 #imports
-from flask import Flask
+from flask import Flask, request, abort, json, jsonify
+from models import setup_db, Publisher
 
 #variables
 
 #app
 app = Flask(__name__)
+setup_db(app)
+
+#cors
+
+
 
 @app.route('/')
 def hello():
-    return 'Hello!'
+    return jsonify({
+        'message': 'Hello World!'
+    })
 
-if __name__ == "__main__":
-    app.run()
+@app.route('/publisher', methods=['POST'])
+def addPublisher():
+
+    return 'Hello'
+

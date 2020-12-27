@@ -8,7 +8,7 @@ db_pw = 'dbspw'
 db_server = 'localhost'
 db_port = '5432'
 db_name = 'dbsdb'
-db_path = 'postgress://{}:{}@{}:{}/{}'.format(db_user,db_pw,db_server,db_port,db_name)
+db_path = 'postgres://{}:{}@{}:{}/{}'.format(db_user,db_pw,db_server,db_port,db_name)
 db = SQLAlchemy()
 
 #setup_db(app)
@@ -22,7 +22,14 @@ def setup_db(app, database_path=db_path):
 #Publisher class
 class Publisher(db.Model):
     __tablename__ = 'publishers'
+    
     id = Column(Integer, primary_key=True)
     email = Column(String)
     fname = Column(String)
-    zname = Column(String)
+    lname = Column(String)
+
+    def __init__(self, email, fname, lname):
+        self.email = email
+        self.fname = fname
+        self.lname = lname
+
