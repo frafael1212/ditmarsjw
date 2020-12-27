@@ -1,6 +1,6 @@
 #imports
+from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, String, Integer
 
 #variables
 db_user = 'dbsuser'
@@ -22,7 +22,7 @@ def setup_db(app, database_path=db_path):
 #Publisher class
 class Publisher(db.Model):
     __tablename__ = 'publishers'
-    
+
     id = Column(Integer, primary_key=True)
     email = Column(String)
     fname = Column(String)
@@ -33,3 +33,18 @@ class Publisher(db.Model):
         self.fname = fname
         self.lname = lname
 
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+    
+    def format(self):
+        return {
+            'fname': self.fname,
+            'lname': self.lname,
+            'email': self.email
+        }
+        
