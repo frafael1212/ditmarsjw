@@ -1,68 +1,94 @@
 #imports
-from flask import Flask, request, abort, json, jsonify
-from models import setup_db, Publisher
+from flask import Flask, request, abort, json, jsonify, render_template, redirect
+from flask_migrate import Migrate
+from flask_cors import CORS
+from models import Publisher, setup_db
 
-#app
+#variables
 app = Flask(__name__)
-setup_db(app)
+db = setup_db(app)
+migrate = Migrate(app, db)
 
+# GETPUBS
+def getPubs():
+    query = Publisher.query.all()
+    formatted_publishers = [q.format() for q in query]
+    return formatted_publishers
 
+# DECORATORS
 @app.route('/')
 def hello():
+    return render_template('index.html')
+
+# PUBLISHER
+@app.route('/publisher', methods=['GET'])
+def showPubs():
+    formatted_publishers = getPubs()
+    return render_template('publisher.html', publishers = formatted_publishers)
+        
+@app.route('/publisher', methods=['POST'])
+def addPub():
+    body = request.get_json()
+    fname = body.get('fname')
+    lname = body.get('lname')
+    email = body.get('email')
+    gender = body.get('gender')
+    privilege = body.get('privilege')
+    isPioneer = body.get('pioneer')
+    pioneer = False
+    if(isPioneer == 'yes'):
+        pioneer = True
+    new_publisher = Publisher(
+        email = email,
+        fname = fname,
+        lname = lname,
+        gender = gender,
+        privilege = privilege,
+        pioneer = pioneer
+    )
+    Publisher.insert(new_publisher)
     return jsonify({
-        'message': 'Hello World!'
-    })
-
-#Publisher Methods
-#POST
-@app.route('/publisher', methods=['POST','GET'])
-def get_addPub():
-    if request.method == 'POST':
-        body = request.get_json()
-        email = body.get('email')
-        fname = body.get('fname')
-        lname = body.get('lname')
-        try:
-            new_publisher = Publisher(
-                email=email,
-                fname=fname,
-                lname=lname
-            )
-            Publisher.insert(new_publisher)
-        except BaseException:
-            return jsonify({
-                'status':'Failed post',
-            }), 404
+        'success': 'True'
+    }),200
+@app.route('/publisher/<int:p_id>', methods=['DELETE'])
+def delPub(p_id):
+    publisher = Publisher.query.filter(Publisher.id == p_id).one_or_none()
+    if publisher == None:
         return jsonify({
-            'status': 'Successful!'
-        }), 200
-    if request.method == 'GET':
-        try:
-            publishers = Publisher.query.all()
-            formatted_publishers = [publisher.format() for publisher in publishers]
-        except BaseException:
-            jsonify({
-                'status': 'Failure'
-            }), 404
-        return jsonify({
-            'publishers':formatted_publishers
-        }), 200
-@app.route('/publisher/<int:p_id>', methods=['DELETE', 'PATCH'])
+            'Message': 'This record does not exist'
+        }),404
+    publisher.delete()
+    return jsonify({
+        'status': 'Delete Successful'
+    }),200
+@app.route('/publisher/<int:p_id>', methods=['PATCH'])
 def del_updPub(p_id):
-    if request.method == 'DELETE':
-        try:
-            publisher = Publisher.query.filter(Publisher.id == p_id).one_or_none()
-            publisher.delete()
-            return jsonify({
-                'status': 'Delete Successful'
-            }), 200
-        except BaseException:
-            jsonify({
-                'status':'Failed to delete!'
-            }), 404
-    if request.method == 'PATCH':
-        body = request.get_json()
-        try:
-            publishers = Publisher.query.filter()
-
-            # CONTINUE HERE
+    publisher = Publisher.query.filter(Publisher.id == p_id).one_or_none()
+    if publisher == None:
+        return jsonify({
+            'Message': 'This record does not exist'
+        }),404
+    body = request.get_json()
+    publisher.fname = body.get('fname')
+    publisher.lname = body.get('lname')
+    publisher.email = body.get('email')
+    publisher.gender = body.get('gender')
+    publisher.privilege = body.get('privilege')
+    isPioneer = body.get('pioneer')
+    publisher.pioneer = False
+    if(isPioneer == 'yes'):
+        publisher.pioneer = True
+    Publisher.patch(publisher)
+    return jsonify({
+        'status': 'Record was updated successfully!'
+    }),200
+@app.route('/reports')
+def reports():
+    return render_template('/reports.html')
+@app.route('/checkbox')
+def checkbox():
+    result = request.form['checkbox']
+    print(result)
+@app.route('/jstest')
+def jstest():
+    return render_template('jstest.html')
